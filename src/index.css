@@ -19,7 +19,7 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
-  section {
+  section:not(:first-of-type) {
     content-visibility: auto;
     contain-intrinsic-size: 1000px;
   }

@@ -192,7 +192,7 @@ export default function App() {
   const wistiaVideoRef = useRef<any>(null);
   const [currentDate] = useState(() => {
     const now = new Date();
-    return now.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }).toUpperCase();
+    return now.toLocaleDateString('pt-BR');
   });
 
   useEffect(() => {
@@ -232,7 +232,7 @@ export default function App() {
     <div className="min-h-screen bg-gray-50 selection:bg-orange-100 selection:text-orange-900">
       {/* Top Promo Bar */}
       <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white text-center py-2.5 px-4 text-sm font-semibold tracking-wider relative z-[100]">
-        <p>🔥 DESCONTO SÓ HOJE — {currentDate} 🔥 OFERTA LIMITADA — ACESSO IMEDIATO</p>
+        <p>DESCONTO APENAS HOJE — {currentDate}</p>
       </div>
 
       {/* Hero Section */}

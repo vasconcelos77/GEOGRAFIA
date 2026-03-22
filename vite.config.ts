@@ -23,7 +23,17 @@ export default defineConfig(({mode}) => {
     ],
     build: {
       target: 'esnext',
-      minify: 'esbuild',
+      minify: 'terser',
+      terserOptions: {
+        compress: {
+          drop_console: true,
+          drop_debugger: true,
+          pure_funcs: ['console.log', 'console.info', 'console.debug', 'console.trace'],
+        },
+        format: {
+          comments: false,
+        },
+      },
       cssMinify: 'esbuild',
       cssCodeSplit: true,
       rollupOptions: {

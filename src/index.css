@@ -15,6 +15,13 @@
   body {
     background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
     background-size: 24px 24px;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  section {
+    content-visibility: auto;
+    contain-intrinsic-size: 1000px;
   }
 }
 

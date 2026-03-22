@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Check, 
   ChevronDown, 
@@ -138,8 +138,53 @@ const PLANS: PricingPlan[] = [
   }
 ];
 
-export default function App() {
+// --- Components ---
+const CountdownTimer = ({ isModal = false }: { isModal?: boolean }) => {
   const [timeLeft, setTimeLeft] = useState(30 * 60);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return {
+      min: String(m).padStart(2, '0'),
+      sec: String(s).padStart(2, '0')
+    };
+  };
+
+  const time = formatTime(timeLeft);
+
+  if (isModal) {
+    return (
+      <div className="bg-red-600 text-white text-center py-2 flex items-center justify-center gap-2 font-black italic tracking-wide text-xs">
+        <Clock className="w-3.5 h-3.5" />
+        OFERTA EXPIRA EM: {time.min}:{time.sec}
+      </div>
+    );
+  }
+
+  return (
+    <div className="inline-flex items-center gap-3 bg-gray-50 border border-gray-200 px-8 py-4 rounded-2xl">
+      <div className="flex flex-col items-center">
+        <span className="font-display text-4xl font-black text-gray-900 leading-none min-w-[64px]">{time.min}</span>
+        <span className="text-[10px] text-gray-500 uppercase tracking-widest mt-1">min</span>
+      </div>
+      <span className="text-3xl text-orange-500 font-bold">:</span>
+      <div className="flex flex-col items-center">
+        <span className="font-display text-4xl font-black text-gray-900 leading-none min-w-[64px]">{time.sec}</span>
+        <span className="text-[10px] text-gray-500 uppercase tracking-widest mt-1">seg</span>
+      </div>
+    </div>
+  );
+};
+
+export default function App() {
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [videoUnmuted, setVideoUnmuted] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -150,11 +195,6 @@ export default function App() {
   });
 
   useEffect(() => {
-    // Countdown timer
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
-    }, 1000);
-
     // Wistia API initialization
     (window as any)._wq = (window as any)._wq || [];
     (window as any)._wq.push({
@@ -166,18 +206,7 @@ export default function App() {
         }
       }
     });
-
-    return () => clearInterval(timer);
   }, [videoUnmuted]);
-
-  const formatTime = (seconds: number) => {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return {
-      min: String(m).padStart(2, '0'),
-      sec: String(s).padStart(2, '0')
-    };
-  };
 
   const handleUnmute = () => {
     setVideoUnmuted(true);
@@ -190,8 +219,6 @@ export default function App() {
       }
     });
   };
-
-  const time = formatTime(timeLeft);
 
   return (
     <div className="min-h-screen bg-gray-50 selection:bg-orange-100 selection:text-orange-900">
@@ -206,6 +233,7 @@ export default function App() {
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
             className="flex flex-col items-center gap-5 max-w-4xl"
           >
             <span className="inline-block font-display font-bold text-xs px-4.5 py-1.5 rounded-full bg-white/60 backdrop-blur-md border border-white shadow-sm text-gray-800 uppercase tracking-wider">
@@ -250,7 +278,7 @@ export default function App() {
 
             <a 
               href="#pricing" 
-              className="group relative inline-flex items-center justify-center gap-3 px-10 py-5 bg-gradient-to-br from-green-500 to-green-600 text-white font-display font-bold text-lg rounded-full shadow-[0_8px_30px_rgba(34,197,94,0.3)] transition-all hover:scale-105 hover:shadow-[0_12px_40px_rgba(34,197,94,0.4)] active:scale-95 uppercase tracking-wide animate-pulse"
+              className="group relative inline-flex items-center justify-center gap-3 px-10 py-5 bg-gradient-to-br from-green-500 to-green-600 text-white font-display font-bold text-lg rounded-full shadow-[0_8px_30px_rgba(34,197,94,0.3)] transition-all hover:scale-105 hover:shadow-[0_12px_40px_rgba(34,197,94,0.4)] active:scale-95 uppercase tracking-wide"
             >
               <span>Quero Acessar Agora</span>
               <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
@@ -286,9 +314,9 @@ export default function App() {
                 key={i}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="flex items-start gap-5 p-8 bg-white border border-gray-100 rounded-3xl shadow-sm hover:border-orange-200 hover:shadow-md transition-all group"
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ delay: i * 0.1, duration: 0.5, ease: "easeOut" }}
+                className="flex items-start gap-5 p-8 bg-white border border-gray-100 rounded-3xl shadow-sm hover:border-orange-200 hover:shadow-md transition-colors duration-300 group"
               >
                 <div className="w-14 h-14 flex items-center justify-center rounded-2xl bg-orange-50 text-orange-500 group-hover:bg-orange-100 transition-colors shrink-0">
                   {f.icon}
@@ -309,7 +337,8 @@ export default function App() {
           <motion.div 
             initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
+            viewport={{ once: true, margin: "-50px" }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
             className="relative bg-white border border-orange-200 rounded-3xl p-10 md:p-12 flex flex-col md:flex-row items-center justify-between gap-8 shadow-lg shadow-orange-500/5 overflow-hidden"
           >
             <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-orange-400 to-green-400" />
@@ -349,9 +378,10 @@ export default function App() {
                 key={i}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="p-10 bg-white border border-orange-500/5 rounded-[2rem] shadow-sm hover:shadow-xl hover:shadow-orange-500/5 hover:-translate-y-1 transition-all text-left"
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ delay: i * 0.1, duration: 0.5, ease: "easeOut" }}
+                whileHover={{ y: -4 }}
+                className="p-10 bg-white border border-orange-500/5 rounded-[2rem] shadow-sm hover:shadow-xl hover:shadow-orange-500/5 transition-shadow duration-300 text-left"
               >
                 <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-50 to-white border border-orange-100 flex items-center justify-center text-orange-500 mb-6 shadow-sm">
                   {b.icon}
@@ -377,12 +407,12 @@ export default function App() {
               <motion.div 
                 key={i}
                 initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className={`relative p-10 rounded-[2rem] text-left border transition-all ${
+                whileInView={{ opacity: 1, y: 0, scale: bonus.featured ? 1.05 : 1 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ delay: i * 0.1, duration: 0.5, ease: "easeOut" }}
+                className={`relative p-10 rounded-[2rem] text-left border transition-colors duration-300 ${
                   bonus.featured 
-                    ? 'border-orange-400 shadow-xl scale-105 z-10' 
+                    ? 'border-orange-400 shadow-xl z-10' 
                     : 'border-orange-500/10 shadow-sm hover:border-orange-300'
                 }`}
               >
@@ -425,9 +455,9 @@ export default function App() {
                 key={i}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="p-10 bg-white rounded-[2rem] shadow-sm border border-black/5 hover:shadow-xl transition-all flex flex-col"
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ delay: i * 0.1, duration: 0.5, ease: "easeOut" }}
+                className="p-10 bg-white rounded-[2rem] shadow-sm border border-black/5 hover:shadow-xl transition-shadow duration-300 flex flex-col"
               >
                 <div className="flex gap-1 text-orange-400 mb-5">
                   {[...Array(5)].map((_, i) => <Star key={i} className="w-4.5 h-4.5 fill-current" />)}
@@ -467,17 +497,7 @@ export default function App() {
 
           <div className="text-center mb-16">
             <p className="text-orange-500 font-bold text-sm tracking-widest uppercase mb-4">⏰ OFERTA LIMITADA — TERMINA EM:</p>
-            <div className="inline-flex items-center gap-3 bg-gray-50 border border-gray-200 px-8 py-4 rounded-2xl">
-              <div className="flex flex-col items-center">
-                <span className="font-display text-4xl font-black text-gray-900 leading-none min-w-[64px]">{time.min}</span>
-                <span className="text-[10px] text-gray-500 uppercase tracking-widest mt-1">min</span>
-              </div>
-              <span className="text-3xl text-orange-500 font-bold">:</span>
-              <div className="flex flex-col items-center">
-                <span className="font-display text-4xl font-black text-gray-900 leading-none min-w-[64px]">{time.sec}</span>
-                <span className="text-[10px] text-gray-500 uppercase tracking-widest mt-1">seg</span>
-              </div>
-            </div>
+            <CountdownTimer />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-3xl mx-auto">
@@ -485,12 +505,13 @@ export default function App() {
               <motion.div 
                 key={i}
                 initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                className={`relative p-10 rounded-[2rem] transition-all ${
+                whileInView={{ opacity: 1, y: 0, scale: plan.featured ? 1.05 : 0.95 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+                className={`relative p-10 rounded-[2rem] transition-shadow duration-300 ${
                   plan.featured 
-                    ? 'bg-white border-2 border-orange-500 shadow-[0_20px_50px_rgba(249,115,22,0.15)] scale-110 z-10' 
-                    : 'bg-gray-50/80 border border-gray-200 shadow-sm opacity-80 hover:opacity-100 scale-95'
+                    ? 'bg-white border-2 border-orange-500 shadow-[0_20px_50px_rgba(249,115,22,0.15)] z-10' 
+                    : 'bg-gray-50/80 border border-gray-200 shadow-sm opacity-80 hover:opacity-100'
                 }`}
               >
                 {plan.featured && (
@@ -564,7 +585,7 @@ export default function App() {
                     href="https://www.ggcheckout.com/checkout/v5/c14Uc67cPhxhQTguXbtV"
                     animate={{ scale: [1, 1.03, 1] }}
                     transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
-                    className="block w-full py-4 bg-gradient-to-b from-[#00E676] to-[#00C853] border-b-4 border-[#009624] hover:brightness-110 text-white text-center rounded-xl font-display font-black text-sm uppercase tracking-widest transition-all shadow-[0_8px_20px_rgba(0,200,83,0.4)]"
+                    className="block w-full py-4 bg-gradient-to-b from-[#00E676] to-[#00C853] border-b-4 border-[#009624] hover:brightness-110 text-white text-center rounded-xl font-display font-black text-sm uppercase tracking-widest transition-colors shadow-[0_8px_20px_rgba(0,200,83,0.4)]"
                   >
                     {plan.buttonText}
                   </motion.a>
@@ -588,7 +609,8 @@ export default function App() {
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            viewport={{ once: true, margin: "-50px" }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
             className="flex flex-col md:flex-row items-center gap-12 p-12 bg-gradient-to-br from-orange-50 to-green-50 rounded-[2.5rem] border border-gray-100 shadow-md"
           >
             <div className="w-32 h-32 md:w-40 md:h-40 rounded-full shadow-xl shrink-0 border-4 border-white overflow-hidden">
@@ -631,7 +653,8 @@ export default function App() {
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            viewport={{ once: true, margin: "-50px" }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
             className="max-w-2xl mx-auto text-center p-12 md:p-16 bg-gradient-to-br from-green-50 to-orange-50 rounded-[3rem] border-2 border-green-200 shadow-lg"
           >
             <div className="text-6xl mb-6">🛡️</div>
@@ -641,7 +664,7 @@ export default function App() {
             </p>
             <a 
               href="#pricing" 
-              className="inline-flex items-center justify-center px-10 py-5 bg-gradient-to-br from-green-500 to-green-600 text-white font-display font-black text-sm rounded-full shadow-lg shadow-green-500/20 hover:scale-105 active:scale-95 transition-all uppercase tracking-widest animate-pulse"
+              className="inline-flex items-center justify-center px-10 py-5 bg-gradient-to-br from-green-500 to-green-600 text-white font-display font-black text-sm rounded-full shadow-lg shadow-green-500/20 hover:scale-105 active:scale-95 transition-all uppercase tracking-widest"
             >
               COMPRAR COM SEGURANÇA
             </a>
@@ -724,10 +747,7 @@ export default function App() {
               className="bg-[#F8F9FA] rounded-3xl w-full max-w-[320px] overflow-hidden shadow-2xl relative flex flex-col max-h-[90vh]"
             >
               {/* Header Banner */}
-              <div className="bg-red-600 text-white text-center py-2 flex items-center justify-center gap-2 font-black italic tracking-wide text-xs">
-                <Clock className="w-3.5 h-3.5" />
-                OFERTA EXPIRA EM: {time.min}:{time.sec}
-              </div>
+              <CountdownTimer isModal={true} />
 
               {/* Close Button */}
               <button 
@@ -758,7 +778,7 @@ export default function App() {
                   
                   <div className="relative z-10 text-center">
                     <p className="text-gray-400 font-black tracking-widest text-[9px] uppercase mb-1.5">
-                      PLANO COMPLETO
+                      PLANO PREMIUM
                     </p>
                     <div className="flex justify-center items-start gap-1 text-green-600 mb-1">
                       <span className="font-bold text-lg mt-1">R$</span>
@@ -775,7 +795,7 @@ export default function App() {
 
                     <div className="bg-yellow-100/80 border border-yellow-200 rounded-full py-2.5 px-3 flex items-center justify-center gap-1.5 text-yellow-700 font-black text-[10px] uppercase tracking-wider">
                       <Zap className="w-3.5 h-3.5 fill-yellow-700 shrink-0" />
-                      LEVE O PLANO COMPLETO POR APENAS + R$5,90!
+                      LEVE O PLANO PREMIUM POR APENAS + R$5,90!
                     </div>
                   </div>
                 </div>
@@ -827,9 +847,9 @@ export default function App() {
                     href="https://www.ggcheckout.com/checkout/v5/WYz3sLAQFjbOdlFtVXUt"
                     animate={{ scale: [1, 1.03, 1] }}
                     transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
-                    className="block w-full py-3.5 bg-gradient-to-b from-[#00E676] to-[#00C853] border-b-4 border-[#009624] hover:brightness-110 text-white text-center rounded-xl font-display font-black text-xs uppercase tracking-widest transition-all shadow-[0_8px_20px_rgba(0,200,83,0.4)]"
+                    className="block w-full py-3.5 bg-gradient-to-b from-[#00E676] to-[#00C853] border-b-4 border-[#009624] hover:brightness-110 text-white text-center rounded-xl font-display font-black text-xs uppercase tracking-widest transition-colors shadow-[0_8px_20px_rgba(0,200,83,0.4)]"
                   >
-                    GARANTIR O PLANO COMPLETO
+                    GARANTIR O PLANO PREMIUM
                   </motion.a>
                   
                   <a 

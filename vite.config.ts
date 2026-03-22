@@ -22,12 +22,16 @@ export default defineConfig(({mode}) => {
       })
     ],
     build: {
+      target: 'esnext',
       minify: 'esbuild',
       cssMinify: 'esbuild',
+      cssCodeSplit: true,
       rollupOptions: {
         output: {
           manualChunks: {
-            vendor: ['react', 'react-dom', 'framer-motion', 'lucide-react'],
+            vendor: ['react', 'react-dom'],
+            motion: ['motion/react'],
+            icons: ['lucide-react']
           },
         },
       },

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Check, 
   ChevronDown, 
@@ -189,6 +189,7 @@ export default function App() {
   const [videoUnmuted, setVideoUnmuted] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isBonusesExpanded, setIsBonusesExpanded] = useState(false);
+  const wistiaVideoRef = useRef<any>(null);
   const [currentDate] = useState(() => {
     const now = new Date();
     return now.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }).toUpperCase();
@@ -200,24 +201,31 @@ export default function App() {
     (window as any)._wq.push({
       id: '9w62yzw1p1',
       onReady: (video: any) => {
+        wistiaVideoRef.current = video;
         if (!videoUnmuted) {
           video.mute();
           video.play();
         }
       }
     });
-  }, [videoUnmuted]);
+  }, []); // Run only once
 
   const handleUnmute = () => {
     setVideoUnmuted(true);
-    (window as any)._wq.push({
-      id: '9w62yzw1p1',
-      onReady: (video: any) => {
-        video.unmute();
-        video.time(0);
-        video.play();
-      }
-    });
+    if (wistiaVideoRef.current) {
+      wistiaVideoRef.current.unmute();
+      wistiaVideoRef.current.time(0);
+      wistiaVideoRef.current.play();
+    } else {
+      (window as any)._wq.push({
+        id: '9w62yzw1p1',
+        onReady: (video: any) => {
+          video.unmute();
+          video.time(0);
+          video.play();
+        }
+      });
+    }
   };
 
   return (

@@ -1,7 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { 
   Check, 
   ChevronDown, 
+  ChevronLeft,
+  ChevronRight,
   FileText, 
   ClipboardCheck, 
   Smartphone, 
@@ -100,6 +102,12 @@ const BONUSES: BonusItem[] = [
     title: "Garantia estendida de 10 dias",
     description: "Mais tempo para você testar e aprovar todo o nosso material com tranquilidade.",
     icon: <Clock className="w-12 h-12" />
+  },
+  {
+    number: 6,
+    title: "Dinâmicas em vídeo na prática",
+    description: "Vídeos exclusivos mostrando como aplicar as dinâmicas passo a passo em sala de aula.",
+    icon: <Zap className="w-12 h-12" />
   }
 ];
 
@@ -131,7 +139,8 @@ const PLANS: PricingPlan[] = [
       { title: "Jogos Interativos de Geografia", oldPrice: "14,90" },
       { title: "100 Perguntas de Geografia", oldPrice: "14,90" },
       { title: "Suporte Premium 24 horas", oldPrice: "19,90" },
-      { title: "Garantia estendida de 10 dias", oldPrice: "47,00" }
+      { title: "Garantia estendida de 10 dias", oldPrice: "58,40" },
+      { title: "Dinâmicas em vídeo na prática", oldPrice: "29,90" }
     ],
     featured: true,
     buttonText: "GARANTIR O PLANO PREMIUM"
@@ -184,7 +193,40 @@ const CountdownTimer = ({ isModal = false }: { isModal?: boolean }) => {
   );
 };
 
+const TESTIMONIAL_CAROUSEL = [
+  "https://i.imgur.com/ZZswovs.jpg",
+  "https://i.imgur.com/uVgRwsH.jpg",
+  "https://i.imgur.com/UY8ylL0.jpg",
+  "https://i.imgur.com/yg75gHg.jpg"
+];
+
 export default function App() {
+  const [currentTestimonial, setCurrentTestimonial] = useState(0);
+  const carouselTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const resetCarouselTimer = () => {
+    if (carouselTimerRef.current) clearInterval(carouselTimerRef.current);
+    carouselTimerRef.current = setInterval(() => {
+      setCurrentTestimonial((prev) => (prev + 1) % TESTIMONIAL_CAROUSEL.length);
+    }, 3000);
+  };
+
+  useEffect(() => {
+    resetCarouselTimer();
+    return () => {
+      if (carouselTimerRef.current) clearInterval(carouselTimerRef.current);
+    };
+  }, []);
+
+  const nextTestimonial = () => {
+    setCurrentTestimonial((prev) => (prev + 1) % TESTIMONIAL_CAROUSEL.length);
+    resetCarouselTimer();
+  };
+
+  const prevTestimonial = () => {
+    setCurrentTestimonial((prev) => (prev - 1 + TESTIMONIAL_CAROUSEL.length) % TESTIMONIAL_CAROUSEL.length);
+    resetCarouselTimer();
+  };
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [videoUnmuted, setVideoUnmuted] = useState(false);
   const [videoProgress, setVideoProgress] = useState(0);
@@ -248,7 +290,7 @@ export default function App() {
     return () => clearInterval(interval);
   }, []); // Run only once
 
-  const getProgressMessage = () => {
+  const getProgressMessage = useMemo(() => {
     if (videoDuration > 0 && videoDuration - videoTime <= 5) {
       return "🎯 Você chegou. Aqui está a oferta exclusiva do pacote premium que prometemos, vale cada segundo.";
     }
@@ -262,9 +304,9 @@ export default function App() {
       return "👀 Continue assistindo, quem chega ao fim leva muito mais conteúdo do que esperava.";
     }
     return "Assista o vídeo até o final para liberar uma oferta especial🎁 ...";
-  };
+  }, [videoDuration, videoTime, videoProgress]);
 
-  const handleUnmute = () => {
+  const handleUnmute = useCallback(() => {
     setVideoUnmuted(true);
     setIsVideoFinished(false);
     setVideoProgress(0);
@@ -283,7 +325,7 @@ export default function App() {
         }
       });
     }
-  };
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50 selection:bg-orange-100 selection:text-orange-900">
@@ -316,7 +358,14 @@ export default function App() {
                 <div className="wistia_responsive_wrapper" style={{ height: '100%', left: 0, position: 'absolute', top: 0, width: '100%' }}>
                   <div className="wistia_embed wistia_async_9w62yzw1p1 videoFoam=true" style={{ height: '100%', position: 'relative', width: '100%' }}>
                     <div className="wistia_swatch" style={{ height: '100%', left: 0, opacity: 0, overflow: 'hidden', position: 'absolute', top: 0, transition: 'opacity 200ms', width: '100%' }}>
-                      <img src="https://fast.wistia.com/embed/medias/9w62yzw1p1/swatch" style={{ filter: 'blur(5px)', height: '100%', objectFit: 'contain', width: '100%' }} alt="" aria-hidden="true" fetchPriority="high" decoding="async" />
+                      <img 
+                        src="https://fast.wistia.com/embed/medias/9w62yzw1p1/swatch" 
+                        style={{ filter: 'blur(5px)', height: '100%', objectFit: 'contain', width: '100%' }} 
+                        alt="" 
+                        aria-hidden="true" 
+                        fetchPriority="high" 
+                        decoding="async" 
+                      />
                     </div>
                   </div>
                 </div>
@@ -352,13 +401,13 @@ export default function App() {
                   </div>
                 </div>
                 <motion.div 
-                  key={getProgressMessage()}
+                  key={getProgressMessage}
                   initial={{ opacity: 0, y: 5 }}
                   animate={{ opacity: 1, y: 0 }}
                   className="bg-white/90 backdrop-blur-md px-6 py-4 rounded-2xl shadow-lg border border-orange-200 text-center w-full min-h-[96px] flex items-center justify-center"
                 >
                   <p className="text-base md:text-lg font-bold text-gray-800 leading-tight text-balance">
-                    {getProgressMessage()}
+                    {getProgressMessage}
                   </p>
                 </motion.div>
               </div>
@@ -490,7 +539,7 @@ export default function App() {
       <section className="py-24 bg-white">
         <div className="container mx-auto px-6 text-center">
           <h2 className="font-display text-4xl font-extrabold text-gray-900 mb-4">
-            5 Super <span className="text-orange-500">Bônus Exclusivos</span>
+            6 Super <span className="text-orange-500">Bônus Exclusivos</span>
           </h2>
           <p className="text-gray-500 text-lg mb-16">Receba gratuitamente ao adquirir o Plano Premium</p>
           
@@ -522,7 +571,7 @@ export default function App() {
 
           <div className="max-w-xl mx-auto p-10 rounded-[2rem] bg-white border-2 border-dashed border-orange-200 shadow-lg">
             <div className="text-lg font-bold text-gray-600 mb-3 uppercase tracking-wider">
-              Total em Bônus: <span className="text-red-600 line-through font-black whitespace-nowrap">R$ 97,00</span>
+              Total em Bônus: <span className="text-red-600 line-through font-black whitespace-nowrap">R$ 157,90</span>
             </div>
             <div className="text-2xl md:text-3xl font-black text-green-700 leading-tight">
               HOJE: TUDO POR CUSTO ZERO
@@ -534,46 +583,96 @@ export default function App() {
       {/* Testimonials */}
       <section className="py-24 bg-gradient-to-b from-gray-50 to-white">
         <div className="container mx-auto px-6">
-          <h2 className="font-display text-4xl font-extrabold text-center text-gray-900 mb-16">
-            O Que Dizem Nossos <span className="text-orange-500">Educadores</span>
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              { name: "Prof. Ana Maria", role: "Professora de Geografia", text: "As atividades são ótimas e bem estruturadas. Recomendo para todos os professores de geografia!", image: "https://i.imgur.com/s47e7uv.jpg" },
-              { name: "Carlos Eduardo", role: "Pai e Educador", text: "Meu filho adora as dinâmicas, ele está aprendendo muito mais rápido. Material incrível!", image: "https://i.imgur.com/iVrapCm.jpg" },
-              { name: "Juliana Santos", role: "Educadora", text: "Material excelente, me ajudou muito nas aulas de geografia. Os alunos ficam muito engajados.", image: "https://i.imgur.com/oY0QD6Z.jpg" }
-            ].map((t, i) => (
-              <motion.div 
-                key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-50px" }}
-                transition={{ delay: i * 0.1, duration: 0.5, ease: "easeOut" }}
-                className="p-10 bg-white rounded-[2rem] shadow-sm border border-black/5 hover:shadow-xl transition-shadow duration-300 flex flex-col"
-              >
-                <div className="flex gap-1 text-orange-400 mb-5">
-                  {[...Array(5)].map((_, i) => <Star key={i} className="w-4.5 h-4.5 fill-current" />)}
-                </div>
-                <p className="text-gray-600 italic leading-relaxed mb-8 relative">
-                  <span className="absolute -top-5 -left-2 text-6xl text-orange-200 opacity-50 font-serif">"</span>
-                  {t.text}
-                </p>
-                <div className="flex items-center gap-4 mt-auto">
+          <div className="text-center mb-12">
+            <h2 className="font-display text-4xl font-extrabold text-gray-900 mb-6">
+              O Que Dizem Nossos <span className="text-orange-500">Educadores</span>
+            </h2>
+            
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="inline-flex items-center justify-center gap-3 px-4 py-2 bg-orange-50/50 border border-orange-100 rounded-full shadow-sm"
+            >
+              <div className="flex -space-x-1.5">
+                {[
+                  "https://i.imgur.com/s47e7uv.jpg",
+                  "https://i.imgur.com/iVrapCm.jpg",
+                  "https://i.imgur.com/oY0QD6Z.jpg"
+                ].map((img, i) => (
                   <img 
-                    src={t.image} 
-                    alt={t.name}
-                    className="w-12 h-12 rounded-full object-cover shrink-0 border-2 border-orange-100"
+                    key={i}
+                    src={img}
+                    alt="User Avatar"
+                    className="w-6 h-6 rounded-full border-2 border-white object-cover shadow-sm"
                     referrerPolicy="no-referrer"
                     loading="lazy"
                     decoding="async"
                   />
-                  <div>
-                    <strong className="block text-gray-900 text-sm">{t.name}</strong>
-                    <span className="text-gray-400 text-xs">{t.role}</span>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
+                ))}
+              </div>
+              <p className="text-gray-700 font-display font-bold text-xs md:text-sm leading-tight">
+                Mais de <span className="text-orange-600">4.587 professores e pais</span> já garantiram o acesso.
+              </p>
+            </motion.div>
+          </div>
+
+          <div className="relative max-w-[900px] mx-auto min-h-[400px] flex items-center justify-center px-4 md:px-16">
+            {/* Previous Arrow - Positioned Absolutely */}
+            <button 
+              onClick={prevTestimonial}
+              className="absolute left-0 md:left-2 p-2 md:p-3 rounded-full bg-white shadow-lg text-orange-500 hover:bg-orange-50 transition-all z-30 border border-gray-100"
+              aria-label="Anterior"
+            >
+              <ChevronLeft className="w-5 h-5 md:w-7 md:h-7" />
+            </button>
+
+            <div className="relative w-[280px] md:w-[460px]">
+              <AnimatePresence>
+                <motion.div
+                  key={currentTestimonial}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0, position: 'absolute', top: 0, left: 0, width: '100%' }}
+                  transition={{ duration: 0.4, ease: "easeInOut" }}
+                  className="relative w-full bg-white rounded-2xl p-1 shadow-2xl border border-gray-200 overflow-hidden"
+                >
+                  <img
+                    src={TESTIMONIAL_CAROUSEL[currentTestimonial]}
+                    alt={`Depoimento ${currentTestimonial + 1}`}
+                    className="w-full h-auto rounded-xl block"
+                    referrerPolicy="no-referrer"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </motion.div>
+              </AnimatePresence>
+
+              {/* Dots */}
+              <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+                {TESTIMONIAL_CAROUSEL.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => {
+                      setCurrentTestimonial(i);
+                      resetCarouselTimer();
+                    }}
+                    className={`h-1.5 rounded-full transition-all ${
+                      currentTestimonial === i ? 'w-6 bg-orange-500' : 'w-1.5 bg-gray-300'
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Next Arrow - Positioned Absolutely */}
+            <button 
+              onClick={nextTestimonial}
+              className="absolute right-0 md:right-2 p-2 md:p-3 rounded-full bg-white shadow-lg text-orange-500 hover:bg-orange-50 transition-all z-30 border border-gray-100"
+              aria-label="Próximo"
+            >
+              <ChevronRight className="w-5 h-5 md:w-7 md:h-7" />
+            </button>
           </div>
         </div>
       </section>
@@ -851,44 +950,54 @@ export default function App() {
 
               <div className="p-5 flex-1 overflow-y-auto">
                 {/* Titles */}
-                <div className="text-center mb-4">
-                  <h2 className="font-display font-black italic text-3xl text-orange-500 leading-none mb-1">
+                <div className="text-center mb-5 relative">
+                  <motion.div 
+                    animate={{ scale: [1, 1.1, 1], opacity: [0.5, 1, 0.5] }}
+                    transition={{ repeat: Infinity, duration: 2 }}
+                    className="absolute -top-4 left-1/2 -translate-x-1/2 w-24 h-24 bg-orange-500/10 rounded-full blur-2xl -z-10"
+                  />
+                  <h2 className="font-display font-black italic text-4xl text-orange-500 leading-none mb-1 drop-shadow-sm">
                     ESPERE!
                   </h2>
-                  <h3 className="font-display font-black italic text-xl text-gray-900 leading-tight">
+                  <h3 className="font-display font-black italic text-xl text-gray-900 leading-tight tracking-tight">
                     NÃO COMETA ESSE ERRO!
                   </h3>
-                  <div className="w-10 h-1 bg-orange-500 mx-auto mt-3 mb-3 rounded-full"></div>
-                  <p className="text-gray-500 text-xs font-medium px-2">
-                    Você está prestes a deixar bônus valiosos para trás por uma diferença mínima.
+                  <div className="w-12 h-1.5 bg-gradient-to-r from-orange-400 to-orange-600 mx-auto mt-3 mb-4 rounded-full shadow-sm shadow-orange-500/20"></div>
+                  <p className="text-gray-500 text-[11px] font-bold px-4 leading-relaxed">
+                    Você está prestes a deixar <span className="text-orange-600">6 bônus exclusivos</span> para trás por uma diferença mínima.
                   </p>
                 </div>
 
                 {/* Premium Card Preview */}
-                <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 mb-3 relative overflow-hidden">
-                  <ShieldCheck className="absolute -right-6 -bottom-6 w-32 h-32 text-gray-50 opacity-50" />
+                <div className="bg-white rounded-[2rem] p-6 shadow-xl shadow-orange-500/5 border border-orange-100 mb-4 relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-orange-500/5 rounded-full -mr-8 -mt-8 transition-transform group-hover:scale-150 duration-700" />
+                  <ShieldCheck className="absolute -right-6 -bottom-6 w-32 h-32 text-orange-50/50" />
                   
                   <div className="relative z-10 text-center">
-                    <p className="text-gray-400 font-black tracking-widest text-[9px] uppercase mb-1.5">
-                      PLANO PREMIUM
-                    </p>
+                    <span className="inline-block bg-orange-500 text-white font-black tracking-widest text-[8px] px-3 py-1 rounded-full uppercase mb-3 shadow-sm shadow-orange-500/20">
+                      OFERTA PREMIUM
+                    </span>
                     <div className="flex justify-center items-start gap-1 text-green-600 mb-1">
                       <span className="font-bold text-lg mt-1">R$</span>
-                      <span className="font-display font-black text-5xl leading-none tracking-tighter">
+                      <span className="font-display font-black text-6xl leading-none tracking-tighter">
                         15
                       </span>
-                      <span className="font-bold text-xl mt-1">
+                      <span className="font-bold text-2xl mt-1">
                         ,90
                       </span>
                     </div>
-                    <p className="text-gray-400 font-bold text-[9px] uppercase tracking-widest mb-4">
+                    <p className="text-gray-400 font-bold text-[9px] uppercase tracking-widest mb-5">
                       (PAGAMENTO ÚNICO)
                     </p>
-
-                    <div className="bg-yellow-100/80 border border-yellow-200 rounded-full py-2.5 px-3 flex items-center justify-center gap-1.5 text-yellow-700 font-black text-[10px] uppercase tracking-wider">
-                      <Zap className="w-3.5 h-3.5 fill-yellow-700 shrink-0" />
-                      LEVE O PLANO PREMIUM POR APENAS + R$5,90!
-                    </div>
+ 
+                    <motion.div 
+                      animate={{ scale: [1, 1.02, 1] }}
+                      transition={{ repeat: Infinity, duration: 1.5 }}
+                      className="bg-gradient-to-r from-yellow-400 to-yellow-500 border border-yellow-300 rounded-2xl py-3 px-4 flex items-center justify-center gap-2 text-yellow-950 font-black text-[10px] uppercase tracking-wider shadow-md shadow-yellow-500/20"
+                    >
+                      <Zap className="w-4 h-4 fill-yellow-950 shrink-0" />
+                      LEVE O PREMIUM POR APENAS + R$5,90!
+                    </motion.div>
                   </div>
                 </div>
 
@@ -903,7 +1012,7 @@ export default function App() {
                         <Star className="w-3.5 h-3.5 text-white fill-white" />
                       </div>
                       <span className="font-black text-gray-900 text-[11px] uppercase tracking-widest text-left">
-                        VER 5 BÔNUS GRÁTIS INCLUSOS
+                        VER 6 BÔNUS GRÁTIS INCLUSOS
                       </span>
                     </div>
                     <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${isBonusesExpanded ? 'rotate-180' : ''}`} />
@@ -917,17 +1026,42 @@ export default function App() {
                         exit={{ height: 0, opacity: 0 }}
                         className="overflow-hidden"
                       >
-                        <div className="p-4 pt-0 border-t border-gray-100 space-y-3">
+                        <motion.div 
+                          initial="hidden"
+                          animate="visible"
+                          variants={{
+                            visible: {
+                              transition: {
+                                staggerChildren: 0.05
+                              }
+                            }
+                          }}
+                          className="p-3 pt-0 border-t border-gray-100 space-y-2"
+                        >
                           {BONUSES.map((bonus, idx) => (
-                            <div key={idx} className="bg-gray-50 p-3 rounded-xl border border-gray-100">
-                              <div className="inline-block bg-orange-100 text-orange-600 font-black text-[10px] px-2 py-0.5 rounded uppercase tracking-widest mb-1.5">
-                                BÔNUS {idx + 1}
+                            <motion.div 
+                              key={idx} 
+                              variants={{
+                                hidden: { opacity: 0, x: -10 },
+                                visible: { opacity: 1, x: 0 }
+                              }}
+                              className="group bg-white p-2.5 rounded-xl border border-orange-100 flex items-center gap-3 shadow-sm hover:border-orange-300 hover:shadow-md transition-all duration-300"
+                            >
+                              <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center text-orange-500 shrink-0 group-hover:scale-110 transition-transform">
+                                {React.cloneElement(bonus.icon as React.ReactElement, { className: "w-4 h-4" })}
                               </div>
-                              <h4 className="font-bold text-gray-900 text-sm leading-tight mb-1">{bonus.title}</h4>
-                              <p className="text-gray-500 text-xs leading-relaxed">{bonus.description}</p>
-                            </div>
+                              <div className="flex-1">
+                                <h4 className="font-bold text-gray-900 text-[10px] leading-tight uppercase tracking-tight">
+                                  BÔNUS {bonus.number}: {bonus.title}
+                                </h4>
+                              </div>
+                              <div className="flex items-center gap-1 text-[9px] font-black text-green-600 bg-green-50 px-2 py-1 rounded-full border border-green-100">
+                                <Check className="w-2.5 h-2.5" />
+                                GRÁTIS
+                              </div>
+                            </motion.div>
                           ))}
-                        </div>
+                        </motion.div>
                       </motion.div>
                     )}
                   </AnimatePresence>

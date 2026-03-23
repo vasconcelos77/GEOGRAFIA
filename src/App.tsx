@@ -522,7 +522,7 @@ export default function App() {
 
           <div className="max-w-xl mx-auto p-10 rounded-[2rem] bg-white border-2 border-dashed border-orange-200 shadow-lg">
             <div className="text-lg font-bold text-gray-600 mb-3 uppercase tracking-wider">
-              Total em Bônus: <span className="text-red-600 line-through font-black">R$ 97,00</span>
+              Total em Bônus: <span className="text-red-600 line-through font-black whitespace-nowrap">R$ 97,00</span>
             </div>
             <div className="text-2xl md:text-3xl font-black text-green-700 leading-tight">
               HOJE: TUDO POR CUSTO ZERO
@@ -616,7 +616,7 @@ export default function App() {
                   <div className="flex flex-col items-center gap-1">
                     {plan.featured ? (
                       <span className="text-red-500 font-black text-sm uppercase tracking-widest bg-red-50 px-4 py-1.5 rounded-full mb-2 border border-red-100">
-                        De R$ {plan.oldPrice} por apenas
+                        De <span className="line-through">R$ {plan.oldPrice}</span> por apenas
                       </span>
                     ) : (
                       <span className="text-gray-500 font-bold line-through text-sm">R$ {plan.oldPrice}</span>

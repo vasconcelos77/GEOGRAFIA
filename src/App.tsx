@@ -187,6 +187,10 @@ const CountdownTimer = ({ isModal = false }: { isModal?: boolean }) => {
 export default function App() {
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [videoUnmuted, setVideoUnmuted] = useState(false);
+  const [videoProgress, setVideoProgress] = useState(0);
+  const [videoTime, setVideoTime] = useState(0);
+  const [videoDuration, setVideoDuration] = useState(0);
+  const [isVideoFinished, setIsVideoFinished] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isBonusesExpanded, setIsBonusesExpanded] = useState(false);
   const wistiaVideoRef = useRef<any>(null);
@@ -206,12 +210,65 @@ export default function App() {
           video.mute();
           video.play();
         }
+        
+        video.bind('end', () => {
+          setIsVideoFinished(true);
+          setVideoProgress(100);
+        });
       }
     });
+
+    // Robust polling for video progress
+    const interval = setInterval(() => {
+      // Try to get video if not set yet
+      if (!wistiaVideoRef.current && (window as any).Wistia && (window as any).Wistia.api) {
+        const v = (window as any).Wistia.api('9w62yzw1p1');
+        if (v) wistiaVideoRef.current = v;
+      }
+
+      if (wistiaVideoRef.current) {
+        const video = wistiaVideoRef.current;
+        const t = video.time();
+        const duration = video.duration();
+        
+        if (duration && duration > 0) {
+          setVideoTime(t);
+          setVideoDuration(duration);
+          const progress = (t / duration) * 100;
+          setVideoProgress(progress);
+          
+          if (progress >= 99.5 || t >= duration - 0.5) {
+            setIsVideoFinished(true);
+            setVideoProgress(100);
+          }
+        }
+      }
+    }, 500);
+
+    return () => clearInterval(interval);
   }, []); // Run only once
+
+  const getProgressMessage = () => {
+    if (videoDuration > 0 && videoDuration - videoTime <= 5) {
+      return "🎯 Você chegou. Aqui está a oferta exclusiva do pacote premium que prometemos, vale cada segundo.";
+    }
+    if (videoProgress >= 75) {
+      return "🔥 Quase lá, sua oferta especial aparece em instantes. Não fecha o vídeo.";
+    }
+    if (videoProgress >= 50) {
+      return "⏳ Você está na metade. A oferta exclusiva que preparamos te espera no final.";
+    }
+    if (videoProgress >= 25) {
+      return "👀 Continue assistindo, quem chega ao fim leva muito mais conteúdo do que esperava.";
+    }
+    return "Assista o vídeo até o final para liberar uma oferta especial🎁 ...";
+  };
 
   const handleUnmute = () => {
     setVideoUnmuted(true);
+    setIsVideoFinished(false);
+    setVideoProgress(0);
+    setVideoTime(0);
     if (wistiaVideoRef.current) {
       wistiaVideoRef.current.unmute();
       wistiaVideoRef.current.time(0);
@@ -254,7 +311,7 @@ export default function App() {
               Atividades interativas que exploram técnicas geográficas, o mundo ao redor e a realidade dos seus alunos. Pra você ser o professor que eles nunca vão esquecer.
             </p>
 
-            <div className="w-full max-w-[320px] md:max-w-[360px] aspect-[9/16] relative rounded-3xl overflow-hidden shadow-2xl border-6 border-white bg-gray-100 group transition-all duration-500 hover:shadow-orange-500/10 hover:border-orange-200 mb-8">
+            <div className="w-full max-w-[320px] md:max-w-[360px] aspect-[9/16] relative rounded-3xl overflow-hidden shadow-2xl border-6 border-white bg-gray-100 group transition-all duration-500 hover:shadow-orange-500/10 hover:border-orange-200 mb-0">
               <div className="wistia_responsive_padding" style={{ padding: '177.78% 0 0 0', position: 'relative' }}>
                 <div className="wistia_responsive_wrapper" style={{ height: '100%', left: 0, position: 'absolute', top: 0, width: '100%' }}>
                   <div className="wistia_embed wistia_async_9w62yzw1p1 videoFoam=true" style={{ height: '100%', position: 'relative', width: '100%' }}>
@@ -284,16 +341,43 @@ export default function App() {
               )}
             </div>
 
-            <a 
-              href="#pricing" 
-              className="group relative inline-flex items-center justify-center gap-3 px-10 py-5 bg-gradient-to-br from-green-500 to-green-600 text-white font-display font-bold text-lg rounded-full shadow-[0_8px_30px_rgba(34,197,94,0.3)] transition-all hover:scale-105 hover:shadow-[0_12px_40px_rgba(34,197,94,0.4)] active:scale-95 uppercase tracking-wide"
-            >
-              <span>Quero Acessar Agora</span>
-              <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
-            </a>
-            <p className="text-sm text-gray-500 flex items-center gap-1.5 mt-2">
-              <ShieldCheck className="w-4 h-4" /> Compra 100% segura • Acesso imediato
-            </p>
+            {!isVideoFinished ? (
+              <div className="w-full max-w-2xl mx-auto mt-0 flex flex-col items-center gap-1 min-h-[100px]">
+                <div className="w-full h-4 bg-gray-200 rounded-full overflow-hidden shadow-inner border border-gray-300/50">
+                  <div 
+                    className="h-full bg-gradient-to-r from-orange-400 to-orange-600 transition-all duration-300 ease-linear relative"
+                    style={{ width: `${Math.max(0, Math.min(100, videoProgress))}%` }}
+                  >
+                    <div className="absolute inset-0 bg-white/20 animate-[pulse_2s_infinite]" />
+                  </div>
+                </div>
+                <motion.div 
+                  key={getProgressMessage()}
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-white/90 backdrop-blur-md px-6 py-4 rounded-2xl shadow-lg border border-orange-200 text-center w-full min-h-[96px] flex items-center justify-center"
+                >
+                  <p className="text-base md:text-lg font-bold text-gray-800 leading-tight text-balance">
+                    {getProgressMessage()}
+                  </p>
+                </motion.div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-2 mt-0 w-full max-w-md mx-auto min-h-[100px] justify-center">
+                <motion.a 
+                  href="#pricing-title" 
+                  animate={{ scale: [1, 1.05, 1] }}
+                  transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+                  className="w-full flex items-center justify-center gap-3 px-8 py-5 bg-[#00C853] text-white font-display font-black text-lg md:text-xl rounded-2xl shadow-[0_8px_30px_rgba(0,200,83,0.4)] hover:shadow-[0_12px_40px_rgba(0,200,83,0.6)] uppercase tracking-wide border-b-4 border-[#009624]"
+                >
+                  <span>RECEBER MINHA OFERTA EXCLUSIVA</span>
+                  <ArrowRight className="w-6 h-6" />
+                </motion.a>
+                <p className="text-sm text-gray-500 flex items-center gap-1.5 font-medium mt-1">
+                  <ShieldCheck className="w-4 h-4 text-green-500" /> Compra 100% segura • Acesso imediato
+                </p>
+              </div>
+            )}
           </motion.div>
         </div>
 
@@ -498,7 +582,7 @@ export default function App() {
       <section id="pricing" className="py-24 bg-white relative overflow-hidden">
         <div className="absolute top-[-200px] right-[-200px] w-[500px] h-[500px] bg-orange-500/10 rounded-full blur-[100px]" />
         
-        <div className="container mx-auto px-6 relative z-10">
+        <div id="pricing-title" className="container mx-auto px-6 relative z-10 scroll-mt-8">
           <h2 className="font-display text-4xl font-extrabold text-center text-gray-900 mb-12">
             Escolha Seu <span className="text-orange-500">Plano</span>
           </h2>
@@ -508,7 +592,7 @@ export default function App() {
             <CountdownTimer />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-3xl mx-auto">
+          <div id="pricing-cards" className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-3xl mx-auto">
             {PLANS.map((plan, i) => (
               <motion.div 
                 key={i}
@@ -671,7 +755,7 @@ export default function App() {
               7 Dias de Garantia Incondicional. Se não ficar satisfeito(a), devolvemos 100% do seu dinheiro.
             </p>
             <a 
-              href="#pricing" 
+              href="#pricing-title" 
               className="inline-flex items-center justify-center px-10 py-5 bg-gradient-to-br from-green-500 to-green-600 text-white font-display font-black text-sm rounded-full shadow-lg shadow-green-500/20 hover:scale-105 active:scale-95 transition-all uppercase tracking-widest"
             >
               COMPRAR COM SEGURANÇA

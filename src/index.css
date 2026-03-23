@@ -19,10 +19,6 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
-  section:not(:first-of-type) {
-    content-visibility: auto;
-    contain-intrinsic-size: 1000px;
-  }
 }
 
 /* Wistia Responsive Embed */
